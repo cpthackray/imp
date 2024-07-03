@@ -1,0 +1,8 @@
+[package]
+name = "letsbayes"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+statrs = "0.17.1"
+emcee = "0.3.0"
