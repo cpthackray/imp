@@ -4,9 +4,13 @@ use statrs::statistics::Distribution;
 
 pub trait PartialPrior {
     fn logprobability(&self, proposed: &f32) -> f64;
+
+    fn initial_guess(&self) -> f64;
 }
 pub trait Prior {
     fn logprobability(&self, proposal: &Guess) -> f64;
+
+    fn initial_guess(&self) -> Guess;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -21,6 +25,10 @@ where
     fn logprobability(&self, proposed: &f32) -> f64 {
         let p: f64 = *proposed as f64;
         self.distribution.ln_pdf(p)
+    }
+
+    fn initial_guess(&self) -> f64 {
+        self.distribution.mean().expect("Distribution has no mean?")
     }
 }
 
@@ -41,6 +49,16 @@ impl Prior for BasicPrior {
             .zip(proposal.values.iter())
             .map(|(x, y)| x.logprobability(y))
             .sum()
+    }
+
+    fn initial_guess(&self) -> Guess {
+        Guess::new(
+            &self
+                .partial_priors
+                .iter()
+                .map(|x| x.initial_guess() as f32)
+                .collect::<Vec<f32>>(),
+        )
     }
 }
 
