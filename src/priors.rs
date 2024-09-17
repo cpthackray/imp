@@ -1,5 +1,5 @@
 use emcee::Guess;
-use statrs::distribution::{Continuous, Normal, Uniform};
+use statrs::distribution::Continuous;
 use statrs::statistics::Distribution;
 
 pub trait PartialPrior {
@@ -15,7 +15,7 @@ pub trait Prior {
 
 #[derive(Debug, Clone, Copy)]
 pub struct IndependentPrior<T: Distribution<f64> + Continuous<f64, f64>> {
-    distribution: T,
+    pub distribution: T,
 }
 
 impl<T> PartialPrior for IndependentPrior<T>
@@ -33,11 +33,11 @@ where
 }
 
 pub struct BasicPrior {
-    partial_priors: Vec<Box<dyn PartialPrior>>,
+    pub partial_priors: Vec<Box<dyn PartialPrior>>,
 }
 
 impl BasicPrior {
-    fn new(partial_priors: Vec<Box<dyn PartialPrior>>) -> Self {
+    pub fn new(partial_priors: Vec<Box<dyn PartialPrior>>) -> Self {
         Self { partial_priors }
     }
 }
@@ -65,6 +65,7 @@ impl Prior for BasicPrior {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use statrs::distribution::{Normal, Uniform};
 
     #[test]
     fn dist_tests() {

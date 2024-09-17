@@ -1,9 +1,9 @@
 use emcee::Guess;
 
 pub struct Prediction {
-    observables: Vec<f64>,
-    errors: Vec<f64>,
-    residual_error: f64,
+    pub observables: Vec<f64>,
+    pub errors: Vec<f64>,
+    pub residual_error: f64,
 }
 
 impl Prediction {
@@ -19,6 +19,35 @@ impl Prediction {
 
 pub trait Model {
     fn predict(&self, proposal: &Guess) -> Prediction;
+}
+
+pub struct InfluenceFunction {
+    weights: Vec<Vec<f64>>,
+    relative_error: f64,
+}
+
+impl InfluenceFunction {
+    pub fn new(weights: Vec<Vec<f64>>, relative_error: f64) -> Self {
+        Self {
+            weights,
+            relative_error,
+        }
+    }
+}
+
+impl Model for InfluenceFunction {
+    fn predict(&self, proposal: &Guess) -> Prediction {
+        let mut vals = vec![0.0; self.weights.len()];
+        for (p, ws) in proposal.values.iter().zip(&self.weights) {
+            vals = vals
+                .iter()
+                .zip(ws)
+                .map(|(x, y)| x + *p as f64 * y)
+                .collect();
+        }
+        let errors = vals.iter().map(|x| x * self.relative_error).collect();
+        Prediction::new(vals, errors, 0.0)
+    }
 }
 
 #[cfg(test)]

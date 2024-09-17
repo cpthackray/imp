@@ -1,10 +1,11 @@
-mod likelihood;
-mod models;
-mod posterior;
-mod priors;
+pub mod likelihood;
+pub mod models;
+pub mod posterior;
+pub mod priors;
 
 use likelihood::Likelihood;
 use models::Model;
+use posterior::Posterior;
 use priors::Prior;
 use serde::{Deserialize, Serialize};
 
@@ -45,20 +46,35 @@ impl<P: Prior, L: Likelihood, M: Model> InferenceProblem<P, L, M> {
         }
     }
 
-    pub fn generate_initial(&self) -> Vec<Guess> {
+    pub fn generate_initial(&self, walkers_per_dim: usize) -> Vec<Guess> {
         self.prior
             .initial_guess()
-            .create_initial_guess(self.dimension)
+            .create_initial_guess(self.dimension * walkers_per_dim)
     }
 }
 
 impl<P: Prior, L: Likelihood, M: Model> Prob for InferenceProblem<P, L, M> {
     fn lnlike(&self, params: &Guess) -> f32 {
         let prediction = self.model.predict(params);
-        self.likelihood.loglikelihood(prediction, &0.0) as f32
+        self.likelihood.loglikelihood(prediction) as f32
     }
     fn lnprior(&self, params: &Guess) -> f32 {
         self.prior.logprobability(params) as f32
+    }
+}
+
+impl<P: Prior, L: Likelihood, M: Model> InferenceProblem<P, L, M> {
+    pub fn sample(&self, n_iterations: usize, walkers_per_dim: usize) -> Posterior {
+        let ndim = self.dimension;
+        let nwalkers = ndim * walkers_per_dim;
+        let mut sampler =
+            EnsembleSampler::new(nwalkers, ndim, self).expect("could not create sampler");
+        let perturned_guess = self.generate_initial(walkers_per_dim);
+        sampler
+            .run_mcmc(&perturned_guess, n_iterations)
+            .expect("error running sampler");
+
+        Posterior::new(self.parameter_names.clone(), sampler.flatchain())
     }
 }
 
