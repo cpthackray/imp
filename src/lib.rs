@@ -63,15 +63,28 @@ impl<P: Prior, L: Likelihood, M: Model> Prob for InferenceProblem<P, L, M> {
     }
 }
 
-impl<P: Prior, L: Likelihood, M: Model> InferenceProblem<P, L, M> {
+impl<P: Prior + Prob, L: Likelihood, M: Model> InferenceProblem<P, L, M> {
     pub fn sample(&self, n_iterations: usize, walkers_per_dim: usize) -> Posterior {
         let ndim = self.dimension;
         let nwalkers = ndim * walkers_per_dim;
         let mut sampler =
             EnsembleSampler::new(nwalkers, ndim, self).expect("could not create sampler");
-        let perturned_guess = self.generate_initial(walkers_per_dim);
+        let perturbed_guess = self.generate_initial(walkers_per_dim);
         sampler
-            .run_mcmc(&perturned_guess, n_iterations)
+            .run_mcmc(&perturbed_guess, n_iterations)
+            .expect("error running sampler");
+
+        Posterior::new(self.parameter_names.clone(), sampler.flatchain())
+    }
+
+    pub fn sample_prior(&self, n_iterations: usize, walkers_per_dim: usize) -> Posterior {
+        let ndim = self.dimension;
+        let nwalkers = ndim * walkers_per_dim;
+        let mut sampler =
+            EnsembleSampler::new(nwalkers, ndim, &self.prior).expect("could not create sampler");
+        let perturbed_guess = self.generate_initial(walkers_per_dim);
+        sampler
+            .run_mcmc(&perturbed_guess, n_iterations)
             .expect("error running sampler");
 
         Posterior::new(self.parameter_names.clone(), sampler.flatchain())

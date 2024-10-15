@@ -1,4 +1,4 @@
-BLIMP
-Bayesian Language(Layout?) for Inferring Model Parameters
+IMP
+Inference for Model Parameters
 
 

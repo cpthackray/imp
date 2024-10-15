@@ -1,4 +1,4 @@
-use emcee::Guess;
+use emcee::{Guess, Prob};
 use statrs::distribution::Continuous;
 use statrs::statistics::Distribution;
 
@@ -59,6 +59,16 @@ impl Prior for BasicPrior {
                 .map(|x| x.initial_guess() as f32)
                 .collect::<Vec<f32>>(),
         )
+    }
+}
+
+impl Prob for BasicPrior {
+    fn lnprior(&self, params: &Guess) -> f32 {
+        self.logprobability(params) as f32
+    }
+
+    fn lnlike(&self, _params: &Guess) -> f32 {
+        0.0
     }
 }
 

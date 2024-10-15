@@ -50,6 +50,36 @@ impl Model for InfluenceFunction {
     }
 }
 
+pub struct InfluenceFunctionLog {
+    weights: Vec<Vec<f64>>,
+    relative_error: f64,
+}
+
+impl InfluenceFunctionLog {
+    pub fn new(weights: Vec<Vec<f64>>, relative_error: f64) -> Self {
+        Self {
+            weights,
+            relative_error,
+        }
+    }
+}
+
+impl Model for InfluenceFunctionLog {
+    fn predict(&self, proposal: &Guess) -> Prediction {
+        let mut vals = vec![0.0; self.weights.len()];
+        for (p, ws) in proposal.values.iter().zip(&self.weights) {
+            vals = vals
+                .iter()
+                .zip(ws)
+                .map(|(x, y)| x + 10.0_f32.powf(*p) as f64 * y)
+                .collect();
+        }
+        // let errors = vals.iter().map(|x| x * self.relative_error).collect();
+        let errors = vals.iter().map(|_| self.relative_error).collect();
+        Prediction::new(vals.iter().map(|x| x.log10()).collect(), errors, 0.0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
