@@ -39,6 +39,7 @@ impl Posterior {
             string_out.push_str(&parameter_name);
             string_out.push(',')
         }
+        string_out.pop();
         string_out.push_str("\n");
         for sample in self.samples.iter().skip(skip).step_by(thinning) {
             let mut sample_string: String = sample
