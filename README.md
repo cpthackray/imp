@@ -1,4 +1,2 @@
-IMP
+## IMP
 Inference for Model Parameters
-
-
